@@ -37,14 +37,9 @@ class SimulateConv1d(nn.Module):
     def forward(self, x):   # x: [batch, hidden, time]
         batch_size, hidden_size, input_size = x.shape
         output_size = int((input_size - self.kernel_size + 2 * self.padding) / self.stride) + 1
+        
         x = F.pad(x, (self.padding, self.padding), 'constant', 0)
-
-        windows = torch.zeros(batch_size, hidden_size, output_size, self.kernel_size)
-
-        for i in range(output_size):
-            start_idx = i * self.stride
-            end_idx = start_idx + self.kernel_size
-            windows[:, :, i, :] = x[:, :, start_idx:end_idx]
+        windows = x.unfold(2, self.kernel_size, self.stride)
 
         windows = windows.view(batch_size*hidden_size, output_size, self.kernel_size)
         results = self.net(windows.float())
